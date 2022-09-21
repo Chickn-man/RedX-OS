@@ -1,6 +1,6 @@
 cd bootloader
-make bootloader
+make setup bootloader
 cd ../gnu-efi/
-make bootloader
+make gnuefi bootloader
 cd ../kernel
-make setup kernel buildiso run
+make setup kernel buildiso run-efi
