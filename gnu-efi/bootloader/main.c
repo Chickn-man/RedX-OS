@@ -237,9 +237,14 @@ EFI_STATUS efi_main (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
   kernelParameters.mapSize = mapSize;
   kernelParameters.descSize = descSize;
 
+  // new stack
+  void *stack = NULL;
+  SystemTable->BootServices->AllocatePool(EfiRuntimeServicesData, 4 * 0x1000, stack);
+
   //jump to kernel
   if (error == 0) {
     SystemTable->BootServices->ExitBootServices(ImageHandle, mapKey);
+    asm volatile ("mov %0, %%rsp" :: "r" (stack + (4 * 0x1000 - 1)) : "memory");
     KernelMain(&kernelParameters);
   }
   

@@ -11,10 +11,17 @@ void gdtInit() {
 }
 
 pTableMan pageTableMan = NULL;
-void memoryInit(KernelParameters *params) {
+void memoryInit(KernelParameters *params, EFI_MEMORY_DESCRIPTOR *stack) {
     // Initialize allocator
     allocator = pageAllocator();
     allocator.readMap(params->map, params->mapSize, params->descSize);
+
+    // Lock kernel pages so the page map doesnt overwrite it again.
+    uint64_t kernelSize = (uint64_t)&_KernelEnd - (uint64_t)&_KernelStart;
+    uint64_t kernelPages = (uint64_t)(kernelSize / 4096) + 1;
+    allocator.locks(&_KernelStart, kernelPages);
+    // Lock stack pages
+    allocator.locks(stack->physAddr, stack->pages);
 
     // Initialize page table manager
     table* PML4 = (table*)allocator.getPage();
@@ -24,15 +31,14 @@ void memoryInit(KernelParameters *params) {
     /* Map Memory */
 
     // kernel
-    uint64_t kernelSize = (uint64_t)&_KernelEnd - (uint64_t)&_KernelStart;
-    uint64_t kernelPages = (uint64_t)(kernelSize / 4096) + 1;
-    allocator.locks(&_KernelStart, kernelPages);
-    for (uint64_t i = (uint64_t)&_KernelStart + kernelSize + 0x1000; i < kernelSize + 0x1000; i += 0x1000) {
-        pageTableMan.map((void*)(/*0xFFFF800000000000*/ + i), (void*)i);
+    for (uint64_t i = (uint64_t)&_KernelStart; i < kernelSize + 0x1000; i += 0x1000) {
+        pageTableMan.map((void*)(/*0xFFFF800000000000 + */i), (void*)i);
     }
 
     // stack
-
+    for (uint64_t i = (uint64_t)stack->physAddr; i < (uint64_t)stack->physAddr + stack->pages * 0x1000; i += 0x1000) {
+        pageTableMan.map((void*)i, (void*)i);
+    }
 
     // framebuffer
     allocator.locks(params->buffer->BaseAddr, ((params->buffer->Size + 0x1000) / 0x1000) + 1);
@@ -40,7 +46,8 @@ void memoryInit(KernelParameters *params) {
         pageTableMan.map((void*)i, (void*)i);
     }
 
-    asm ("mov %0, %%cr3" : : "r" (PML4));
+    asm volatile ("mov %0, %%cr3" :: "r" (PML4) : "memory");
+
 }
 
 void interuptInit() {

@@ -17,7 +17,7 @@ struct KernelParameters {
 void gdtInit();
 
 extern pTableMan pageTableManager;
-void memoryInit(KernelParameters *params);
+void memoryInit(KernelParameters *params, EFI_MEMORY_DESCRIPTOR *stack);
 
 void interuptInit();
 
