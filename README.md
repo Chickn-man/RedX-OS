@@ -10,7 +10,7 @@ qemu is needed for running
 git clone https://github.com/Chickn-man/RedX-OS<br>
 cd RedX-OS<br>
 chmod +x run<br>
-./run
+./run.sh
 <br/>
 ### Windows
 Download wsl and follow linux instructions but then run "run.bat" in /kernel
