@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include "../kernelFunc.h"
 #include "../hid/io.h"
+#include "../hid/keyboard.h"
 
 #define intr      0b10001110
 #define call      0b10001100

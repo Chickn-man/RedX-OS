@@ -130,6 +130,10 @@ typedef struct {
   EFI_MEMORY_DESCRIPTOR* map;
   UINTN mapSize;
   UINTN descSize;
+  void *stack;
+  size_t stackSize;
+  void *pageDirectoryAddress;
+  size_t pageDirectorySize;
 } KernelParameters;
 
 EFI_STATUS efi_main (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
@@ -227,7 +231,25 @@ EFI_STATUS efi_main (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
     SystemTable->BootServices->AllocatePool(EfiLoaderData, mapSize, (void**)&map);
     SystemTable->BootServices->GetMemoryMap(&mapSize, map, &mapKey, &descSize, &descVersion);
   }
-  
+
+  // new stack
+  EFI_PHYSICAL_ADDRESS stackPhys;
+  const size_t stackSize = 32000;
+  SystemTable->BootServices->AllocatePages(AllocateAnyPages, EfiLoaderData, stackSize / 0x1000, &stackPhys);
+
+  void *stack = (void *)stackPhys;
+
+  Print(L"Stack: %x\n", stack);
+
+  uint64_t memSize = 0;
+
+  for (int i = 0; i < (int)mapSize / (int)descSize; i++) {
+    EFI_MEMORY_DESCRIPTOR* desc = (EFI_MEMORY_DESCRIPTOR*)((uint64_t)map + (i * descSize));
+    memSize += desc->NumberOfPages * 4096;
+  }
+
+  EFI_PHYSICAL_ADDRESS pageDirectoryPhysAddress;
+
   // Kernel prep
   void (*KernelMain)(KernelParameters*) = ((__attribute__((sysv_abi)) void (*)(KernelParameters*) ) header.e_entry);
   KernelParameters kernelParameters;
@@ -236,15 +258,15 @@ EFI_STATUS efi_main (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
   kernelParameters.map = map;
   kernelParameters.mapSize = mapSize;
   kernelParameters.descSize = descSize;
-
-  // new stack
-  void *stack = NULL;
-  SystemTable->BootServices->AllocatePool(EfiRuntimeServicesData, 4 * 0x1000, stack);
-
+  kernelParameters.stack = stack;
+  kernelParameters.stackSize = stackSize;
+  kernelParameters.pageDirectorySize = (((memSize / 0x1000) / 512) + (((memSize / 0x1000) / 512) / 512) + ((((memSize / 0x1000) / 512) / 512) / 512) + 3) * 0x1000;
+  SystemTable->BootServices->AllocatePages(AllocateAnyPages, EfiLoaderData, kernelParameters.pageDirectorySize / 0x1000, &pageDirectoryPhysAddress);
+  kernelParameters.pageDirectoryAddress = (void *)pageDirectoryPhysAddress;
   //jump to kernel
   if (error == 0) {
     SystemTable->BootServices->ExitBootServices(ImageHandle, mapKey);
-    asm volatile ("mov %0, %%rsp" :: "r" (stack + (4 * 0x1000 - 1)) : "memory");
+    asm volatile ("mov %0, %%rsp" :: "r" (stack + (stackSize - 1)) : "memory");
     KernelMain(&kernelParameters);
   }
   

@@ -51,7 +51,7 @@ char lookup(uint8_t scancode, bool uppercase) {
 bool leftShiftDown;
 bool rightShiftDown;
 bool mod;
-void handleKeyBoard(uint8_t scancode) {
+void handleKeyboard(uint8_t scancode) {
   if (mod) {
     if (scancode == Up) {
       // up
@@ -65,6 +65,8 @@ void handleKeyBoard(uint8_t scancode) {
     mod = false;
     return;
   }
+
+  int i;
   switch (scancode) {
     case 0xe0:
       mod = true;
@@ -82,19 +84,22 @@ void handleKeyBoard(uint8_t scancode) {
       rightShiftDown = false;
       break;
     case Enter:
-      // enter
+      for (i = 0; terminal.in[i] != NULL && i < terminal.bufferSize; i++) {}
+      terminal.in[i] = '\n';
       return;
     case BackSpace:
       // del
       return;
     case Spacebar:
-      // space
+      for (i = 0; terminal.in[i] != NULL && i < terminal.bufferSize; i++) {}
+      terminal.in[i] = ' ';
       return;
   }
 
   if (lookup(scancode, leftShiftDown | rightShiftDown) == 0) return;
 
-  for (int i = 0; terminal.in[i] != NULL && i < terminal.bufferSize; i++) {
-    terminal.in[i] = lookup(scancode, leftShiftDown | rightShiftDown);
-  }
+  //basicRender.printChar(lookup(scancode, leftShiftDown | rightShiftDown), 0xFFFFFFFF);
+
+  for (i = 0; terminal.in[i] != NULL && i < terminal.bufferSize; i++) {}
+  terminal.in[i] = lookup(scancode, leftShiftDown | rightShiftDown);
 }

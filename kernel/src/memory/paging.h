@@ -1,4 +1,5 @@
 #pragma once
+
 #include <stdint.h>
 #include "memory.h"
 #include "../basicRenderer.h"
@@ -43,11 +44,16 @@ class pMapIndexer {
 };
 
 class pTableMan {
+  private:
+    table *dirAddr;
+    size_t dirSize;
+    void *allocateEntry();
   public:
-  pTableMan(table* PML4 /*level four address*/);
-  table* PML4;
-  void map(void* V, void* P);
-  void* getPool(uint64_t size);
+    void init(void *directoryAddress, size_t directorySize);
+    void map(void* V, void* P);
+    void* getPool(uint64_t size);
 };
 
 extern void* VAI;
+
+extern pTableMan pageTableMan;

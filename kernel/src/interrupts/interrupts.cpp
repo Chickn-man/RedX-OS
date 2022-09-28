@@ -44,6 +44,7 @@ uint8_t scancode;
 __attribute__((interrupt)) void keyboardHandler(interruptFrame* frame) {
   scancode = inb(0x60);
   
+  handleKeyboard(scancode);
 
   endMaster();
 }

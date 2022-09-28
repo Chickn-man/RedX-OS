@@ -39,7 +39,13 @@ kernel: $(OBJS) link
 $(OBJDIR)/interrupts/interrupts.o: $(SRCDIR)/interrupts/interrupts.cpp
 	@ echo !==== COMPILING $^
 	@ mkdir -p $(@D)
-	$(CC) -mno-red-zone -mgeneral-regs-only -ffreestanding -c $^ -o $@ -lm1048488
+	$(CC) -mno-red-zone -mgeneral-regs-only -ffreestanding -ggdb -c $^ -o $@ -lm
+
+$(OBJDIR)/memory/memory.o: $(SRCDIR)/memory/memory.cpp
+	@ echo !==== COMPILING $^
+	@ mkdir -p $(@D)
+	$(CC) -ffreestanding -fshort-wchar -mno-red-zone -c $^ -o $@ -lm
+
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 	@ echo !==== COMPILING $^
@@ -103,7 +109,7 @@ run-efi:
 	qemu-system-x86_64 -drive file=$(BUILDDIR)/$(OSNAME)-fat.iso $(QEMU-FLAGS) -drive if=pflash,format=raw,unit=0,file="$(OVMFDIR)/OVMF_CODE-pure-efi.fd",readonly=on -drive if=pflash,format=raw,unit=1,file="$(OVMFDIR)/OVMF_VARS-pure-efi.fd"
 
 run-efi-debug:
-	qemu-system-x86_64 -s -S -drive file=$(BUILDDIR)/$(OSNAME)-fat.iso $(QEMU-FLAGS) -drive if=pflash,format=raw,unit=0,file="$(OVMFDIR)/OVMF_CODE-pure-efi.fd",readonly=on -drive if=pflash,format=raw,unit=1,file="$(OVMFDIR)/OVMF_VARS-pure-efi.fd"
+	qemu-system-x86_64 -s -S -drive file=$(BUILDDIR)/$(OSNAME)-fat.iso $(QEMU-FLAGS) -drive if=pflash,format=raw,unit=0,file="$(OVMFDIR)/OVMF_CODE-pure-efi.fd",readonly=on -drive if=pflash,format=raw,unit=1,file="$(OVMFDIR)/OVMF_VARS-pure-efi.fd" -d int -M smm=off
 
 run-bios:
 	qemu-system-x86_64 -drive file=$(BUILDDIR)/$(OSNAME).iso $(QEMU-FLAGS)

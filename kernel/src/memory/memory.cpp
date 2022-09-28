@@ -97,14 +97,14 @@ void pageAllocator::bitmapInit(size_t size, void* bufferAddr) {
 */
 uint64_t pageI;
 void* pageAllocator::getPage() {
-  for (; pageI < pageBitmap.size * 8; pageI++) {
+  for (; pageI < pageBitmap.size * 8 - 1; pageI++) {
     if (pageBitmap[pageI] == true) continue;
     lock((void*)(pageI * 4096));
     return (void*)(pageI * 4096);
   }
   
   pageI = 0;
-  for (; pageI < pageBitmap.size * 8; pageI++) {
+  for (; pageI < pageBitmap.size * 8 - 1; pageI++) {
     if (pageBitmap[pageI] == true) continue;
     lock((void*)(pageI * 4096));
     return (void*)(pageI * 4096);

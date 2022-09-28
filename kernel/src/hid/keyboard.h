@@ -1,6 +1,7 @@
 #pragma once
 #include <stdint.h>
 #include "../terminal/terminal.h"
+#include "../basicRenderer.h"
 
 #define LeftShift 0x2A
 #define RightShift 0x36
@@ -16,4 +17,4 @@
 extern const char ascii[];
 char lookup(uint8_t scancode, bool uppercase);
 
-void handleKeyBoard(uint8_t scancode);
+void handleKeyboard(uint8_t scancode);
