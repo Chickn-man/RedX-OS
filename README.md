@@ -9,7 +9,7 @@ qemu is needed for running
 ### Linux
 git clone https://github.com/Chickn-man/RedX-OS<br>
 cd RedX-OS<br>
-chmod +x run<br>
+chmod +x run.sh<br>
 ./run.sh
 <br/>
 ### Windows
